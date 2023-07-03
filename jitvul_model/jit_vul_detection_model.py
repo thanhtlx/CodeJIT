@@ -18,7 +18,7 @@ def train_model(graph_path, train_file_path, test_file_path, _params, model_path
         map_diffs = json.load(f)
 
     tmp_file = open(train_file_path, "r").readlines()
-    train_files = [f.replace("\n", "") for f in tmp_file][:3245]
+    train_files = [f.replace("\n", "") for f in tmp_file]
 
     train_dataset = GraphDataset(train_files, graph_path)
     _trainLoader = DataLoader(
@@ -104,7 +104,7 @@ def test_model(graph_path, test_file_path, _params, model_path):
         map_diffs = json.load(f)
 
     tmp_file = open(test_file_path, "r").readlines()
-    test_files = [f.replace("\n", "") for f in tmp_file][:200]
+    test_files = [f.replace("\n", "") for f in tmp_file]
     random.shuffle(test_files)
     test_files = test_files
 

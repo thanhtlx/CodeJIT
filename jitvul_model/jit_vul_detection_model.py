@@ -14,9 +14,6 @@ tqdm.pandas()
 
 def train_model(graph_path, train_file_path, test_file_path, _params, model_path, starting_epochs=0):
     torch.manual_seed(12345)
-    with open('map_ids_diff_cm.json') as f:
-        map_diffs = json.load(f)
-
     tmp_file = open(train_file_path, "r").readlines()
     train_files = [f.replace("\n", "") for f in tmp_file]
 
@@ -28,7 +25,7 @@ def train_model(graph_path, train_file_path, test_file_path, _params, model_path
     max_epochs = _params['max_epochs']
 
     data = {}
-    for graph, _, index in _trainLoader:
+    for graph, embed, _, index in _trainLoader:
         data = graph
         print(data)
         break
@@ -50,7 +47,7 @@ def train_model(graph_path, train_file_path, test_file_path, _params, model_path
     last_acc = 0
     for e in range(starting_epochs, max_epochs):
         train_loss, acc = train(e, _trainLoader, model,
-                                criterion, optimizer, map_diffs, device)
+                                criterion, optimizer, device)
         if last_train_loss == -1 or last_train_loss > train_loss:
             saved_model_path = os.path.join(os.path.join(
                 os.getcwd(), model_path), _params['model_name'] + ".pt")
@@ -59,11 +56,11 @@ def train_model(graph_path, train_file_path, test_file_path, _params, model_path
         gc.collect()
 
 
-def train(curr_epochs, _trainLoader, model, criterion, optimizer, map_diffs, device):
+def train(curr_epochs, _trainLoader, model, criterion, optimizer, device):
     train_loss = 0
     correct = 0
     model.train()
-    for graph, commit_id, index in _trainLoader:
+    for graph, embed, commit_id, index in _trainLoader:
         commit_id = commit_id[5:-3]
 
         if graph.num_nodes > 1500:
@@ -80,7 +77,7 @@ def train(curr_epochs, _trainLoader, model, criterion, optimizer, map_diffs, dev
         if graph.num_nodes == 0 or graph.num_edges == 0:
             continue
         out = model(graph.x, graph.edge_index, graph.edge_type,
-                    graph.edge_attr, map_diffs[commit_id])
+                    graph.edge_attr, embed)
         loss = criterion(out, target)
         optimizer.zero_grad()
         loss.backward()
@@ -100,8 +97,6 @@ def train(curr_epochs, _trainLoader, model, criterion, optimizer, map_diffs, dev
 
 def test_model(graph_path, test_file_path, _params, model_path):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    with open('map_ids_diff_cm.json') as f:
-        map_diffs = json.load(f)
 
     tmp_file = open(test_file_path, "r").readlines()
     test_files = [f.replace("\n", "") for f in tmp_file]
@@ -113,7 +108,7 @@ def test_model(graph_path, test_file_path, _params, model_path):
         test_dataset, collate_fn=collate_batch, shuffle=False)
 
     data = {}
-    for graph, _, index in _testLoader:
+    for graph, embed, _, index in _testLoader:
         data = graph
         break
     if _params['GNN_type'] == "RGCN":
@@ -127,17 +122,17 @@ def test_model(graph_path, test_file_path, _params, model_path):
         os.getcwd(), model_path), _params['model_name'] + ".pt")))
     test_model.eval()
     evaluate_metrics(_params['model_name'], test_model,
-                     _testLoader, map_diffs, device)
+                     _testLoader, device)
 
 
-def evaluate_metrics(model_name, model, _loader, map_diffs, device):
+def evaluate_metrics(model_name, model, _loader, device):
     print('evaluate >')
     write_to_file_results = []
     model.eval()
     model.to(device)
     with torch.no_grad():
         all_predictions, all_targets, all_probs = [], [], []
-        for graph, commit_id, index in _loader:
+        for graph, embed, commit_id, index in _loader:
             commit_id = commit_id[5:-3]
             if graph.num_nodes > 1500:
                 graph = graph.subgraph(torch.LongTensor(list(range(0, 1500))))
@@ -148,7 +143,7 @@ def evaluate_metrics(model_name, model, _loader, map_diffs, device):
                 continue
 
             out = model(graph.x, graph.edge_index, graph.edge_type,
-                        graph.edge_attr, map_diffs[commit_id])
+                        graph.edge_attr, embed)
             target = target.cpu().detach().numpy()
             pred = out.argmax(dim=1).cpu().detach().numpy()
             prob_1 = out.cpu().detach().numpy()[0][1]

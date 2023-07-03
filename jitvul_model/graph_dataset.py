@@ -29,10 +29,11 @@ class GraphDataset(Dataset):
 
     def __getitem__(self, index):
         graph_file = self.datapoint_files[index]
-
         graph = torch.load(graph_file)
         file_name = graph_file.split("/")[-1]
-        return graph, file_name, index
+        embed_file = 'code/'+file_name
+        embed = torch.load(embed_file)
+        return graph, embed, file_name, index
 
     def __len__(self):
         return len(self.datapoint_files)

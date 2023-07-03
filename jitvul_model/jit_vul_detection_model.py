@@ -64,7 +64,7 @@ def train(curr_epochs, _trainLoader, model, criterion, optimizer, map_diffs, dev
     correct = 0
     model.train()
     for graph, commit_id, index in _trainLoader:
-        commit_id = commit_id[:40]
+        commit_id = commit_id[5:-3]
 
         if graph.num_nodes > 1500:
 
@@ -138,7 +138,7 @@ def evaluate_metrics(model_name, model, _loader, map_diffs, device):
     with torch.no_grad():
         all_predictions, all_targets, all_probs = [], [], []
         for graph, commit_id, index in _loader:
-            commit_id = commit_id[:40]
+            commit_id = commit_id[5:-3]
             if graph.num_nodes > 1500:
                 graph = graph.subgraph(torch.LongTensor(list(range(0, 1500))))
             if device != 'cpu':

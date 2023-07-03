@@ -27,7 +27,7 @@ if __name__ == '__main__':
         save_file = join(embedding_graph_dir,f'data_{k}.pt')
         _,data = model(torch.tensor(v,device=device)[None,:],return_dict=False)
         torch.save(data,save_file)
-        tmp = cur/ total * 100
+        tmp = int( cur/ total * 1000)
         if tmp > per:
             per = tmp
             print(per)

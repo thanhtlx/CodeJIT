@@ -20,8 +20,7 @@ if __name__ == '__main__':
     with open('map_ids_diff_cm.json') as f:
         mm = json.load(f)
     for k,v in mm.items():
-        save_file = join(embedding_graph_dir,f'data_{k}_.pt')
+        save_file = join(embedding_graph_dir,f'data_{k}.pt')
         _,data = model(torch.tensor(v,device=device)[None,:],return_dict=False)
-        print(data.shape)
         torch.save(data,save_file)
     

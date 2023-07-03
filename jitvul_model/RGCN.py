@@ -4,6 +4,7 @@ from torch_geometric.nn import RGCNConv, RGATConv, CuGraphRGCNConv, GATConv, Fas
 from torch_geometric.nn import global_mean_pool, global_max_pool, global_add_pool
 import torch
 from torch.nn import ReLU, Softmax, LeakyReLU
+from transformers import RobertaTokenizer, RobertaConfig, RobertaModel
 
 
 class RGCN(torch.nn.Module):
@@ -21,8 +22,11 @@ class RGCN(torch.nn.Module):
                 exec('self.conv_{} = RGCNConv(hidden_channels, hidden_channels,num_relations=self.num_of_relations, add_self_loops=False, dropout = dropout)'.format(i))
         self.relu = ReLU(inplace=True)
         self.lin = Linear(hidden_channels, 2)
-
-    def forward(self, x, edge_index, edge_type, edge_attr):
+        self.model = RobertaModel.from_pretrained("microsoft/codebert-base")
+        self.lin_bert = Linear(768,hidden_channels)
+        self.merge = Linear(hidden_channels*2,hidden_channels)
+        self.out = Linear(hidden_channels,2)
+    def forward(self, x, edge_index, edge_type, edge_attr, diffs):
         # 1. Obtain node embeddings
         for i in range(self.num_layers):
             if i < self.num_layers - 1:
@@ -40,5 +44,10 @@ class RGCN(torch.nn.Module):
             x = global_add_pool(x,  torch.zeros(x.shape[0], dtype=int, device=x.device))
             # 3. Apply a final classifier
         x = F.dropout(x, p=self.dropout, training=self.training)
-        x = self.lin(x)
-        return x
+        # codebert 
+        _,y = self.model(torch.tensor(diffs,device=x.device)[None,:],return_dict=False)
+        y = self.lin_bert(y)
+        merge = torch.cat((x,y),dim=1)
+        merge = self.merge(merge)
+        out = self.out(merge)
+        return out

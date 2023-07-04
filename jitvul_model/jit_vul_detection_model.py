@@ -4,11 +4,11 @@ from torch import nn
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, classification_report, roc_curve, auc
 from tqdm import tqdm
 import torch
-from graph_dataset import *
+from jitvul_model.graph_dataset import *
 import random
-from RGAT import *
-from RGCN import *
-from FastRGCN import *
+from jitvul_model.RGAT import *
+from jitvul_model.RGCN import *
+from jitvul_model.FastRGCN import *
 import pandas
 tqdm.pandas()
 

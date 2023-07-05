@@ -89,14 +89,14 @@ if __name__ == '__main__':
     node_files = [f for f in listdir(node_graph_dir) if isfile(join(node_graph_dir, f))]
     # random.shuffle(node_files)
     cm = set([f.split(".")[0].split("_")[-1] for f in node_files])
-    parsed = list()
-    with open('cm.txt') as f:
-        parsed = set([l.strip() for l in f.readlines()])
-    parser_cm = list(cm.intersection(parsed))
-    with open('tmp') as f:
-        parsed = set([l.strip() for l in f.readlines()])
-    parser_cm = list(set(parser_cm).difference(parsed))
-    for commit_id in parser_cm:
+    #parsed = list()
+    #with open('cm.txt') as f:
+    #    parsed = set([l.strip() for l in f.readlines()])
+    # parser_cm = list(cm.intersection(parsed))
+    # with open('tmp') as f:
+    #     parsed = set([l.strip() for l in f.readlines()])
+    # parser_cm = list(set(parser_cm).difference(parsed))
+    for commit_id in cm:
     # for commit_id in cm:
         try:
             # print(f"embedd: {commit_id}")

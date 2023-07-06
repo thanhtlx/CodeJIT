@@ -8,8 +8,8 @@ edge_types = ["AST", "CFG", "CDG", "DDG"]
 
 def load_nodes(nodes, index_col, encoders=None, **kwargs):
     if nodes.shape[0] <= 0:
-        return torch.zeros(1,771), dict()
-    
+        return torch.zeros(10,771), dict()
+
     mapping = {index: i for i, index in enumerate(nodes["id"].unique())}
     x = None
     if encoders is not None:
@@ -21,9 +21,9 @@ def load_nodes(nodes, index_col, encoders=None, **kwargs):
 def load_edges(edges, src_index_col, src_mapping, dst_index_col, dst_mapping, edge_type_col,
                encoders=None, **kwargs):
     if edges.shape[0] <= 0:
-        edge_index = torch.tensor([[0], [0]])
-        edge_type = torch.tensor([0])
-        edge_attr = torch.tensor([[0,0,0]])
+        edge_index = torch.zeros(10,2)
+        edge_type = torch.zeros(10)
+        edge_attr = torch.zeros(10,3)
         # print(edge_index.shape)
         # print(edge_attr.shape)
         return edge_index, edge_type, edge_attr
@@ -57,10 +57,6 @@ class ContentEncoder(object):
         x = torch.zeros(len(df), 768)
         for i, item in enumerate(df.values):
             item = item.strip()
-            if item in self.caches:
-                x[i] = self.caches[item]
-                print("cache:"+ item)
-                continue
             if len(item) <= 0:
                 continue
             tokens = self.tokenizer.tokenize(item)[:500]

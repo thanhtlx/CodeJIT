@@ -21,7 +21,7 @@ def load_nodes(nodes, index_col, encoders=None, **kwargs):
 def load_edges(edges, src_index_col, src_mapping, dst_index_col, dst_mapping, edge_type_col,
                encoders=None, **kwargs):
     if edges.shape[0] <= 0:
-        edge_index = torch.zeros(10,2)
+        edge_index = torch.zeros(2,10)
         edge_type = torch.zeros(10)
         edge_attr = torch.zeros(10,3)
         # print(edge_index.shape)

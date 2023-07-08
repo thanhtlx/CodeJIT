@@ -122,6 +122,8 @@ def test_model(graph_path, test_file_path, _params, model_path):
         test_model = RGAT(in_channels = data.num_node_features, hidden_channels=_params['hidden_size'], dropout = _params['dropout_rate'], num_of_layers = _params["num_of_layers"], edge_dim = data.edge_attr.size(-1), graph_readout_func = _params["graph_readout_func"])
     elif _params['GNN_type'] == "RGCN":
         test_model = RGCN(in_channels = data.num_node_features, hidden_channels=_params['hidden_size'], dropout = _params['dropout_rate'], num_of_layers = _params["num_of_layers"], edge_dim = data.edge_attr.size(-1), graph_readout_func = _params["graph_readout_func"])
+    elif _params['GNN_type'] == "GCN":
+        test_model = CodeJITGCN(in_channels = data.num_node_features, hidden_channels=_params['hidden_size'], dropout = _params['dropout_rate'], num_of_layers = _params["num_of_layers"], graph_readout_func = _params["graph_readout_func"])
     elif _params['GNN_type'] == "GAT":
         test_model = GATClassifier(in_channels = data.num_node_features, hidden_channels=_params['hidden_size'], dropout = _params['dropout_rate'], num_of_layers = _params["num_of_layers"], edge_dim = data.edge_attr.size(-1), graph_readout_func = _params["graph_readout_func"])
     else:

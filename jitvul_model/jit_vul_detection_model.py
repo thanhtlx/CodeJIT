@@ -98,10 +98,10 @@ def evaluate_metrics(model_name, model, _loader, device):
             out = model(graph)
             target = torch.tensor(target)
             target = target.cpu().detach().numpy()
-            pred = out.argmax(dim=1).cpu().detach().numpy()
-            pro_out = out.tolist()[0]
-            prob_1 = out.cpu().detach().numpy()[0][1]
-            write_to_file_results.append({"commit_id": commit_id, "predict": pred[0], "target": graph.y.item(),"label0":pro_out[0],"label1":pro_out[1]})
+            pred = out.argmax(dim=0).cpu().detach().numpy()
+            pro_out = out.tolist()
+            prob_1 = out.cpu().detach().numpy()[1]
+            write_to_file_results.append({"commit_id": commit_id, "predict": pred, "target": target,"label0":pro_out[0],"label1":pro_out[1]})
             all_probs.append(prob_1)
             all_predictions.append(pred)
             all_targets.append(target)

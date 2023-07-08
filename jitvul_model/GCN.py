@@ -6,9 +6,9 @@ import torch
 from torch.nn import ReLU, Softmax, LeakyReLU
 
 
-class GCN(torch.nn.Module):
-    def __init__(self, in_channels, hidden_channels,edge_dim, num_relations = 4, dropout = 0.1, num_of_layers = 2, graph_readout_func = "add"):
-        super(GCN, self).__init__()
+class CodeJITGCN(torch.nn.Module):
+    def __init__(self, in_channels, hidden_channels, num_relations=4, dropout=0.1, num_of_layers=2, graph_readout_func="add"):
+        super(CodeJITGCN, self).__init__()
         torch.manual_seed(12345)
         self.num_layers = num_of_layers
         self.num_of_relations = num_relations
@@ -16,9 +16,11 @@ class GCN(torch.nn.Module):
         self.graph_readout_func = graph_readout_func
         for i in range(self.num_layers):
             if i == 0:
-                exec('self.conv_{} = GCN(in_channels, hidden_channels, add_self_loops=False, dropout = dropout)'.format(i))
+                exec(
+                    'self.conv_{} = GCN(in_channels, hidden_channels,num_layers=self.num_layers, dropout = dropout)'.format(i))
             else:
-                exec('self.conv_{} = GCN(hidden_channels, hidden_channels, add_self_loops=False, dropout = dropout)'.format(i))
+                exec(
+                    'self.conv_{} = GCN(hidden_channels, hidden_channels,num_layers=self.num_layers, dropout = dropout)'.format(i))
         self.relu = ReLU(inplace=True)
         self.lin = Linear(hidden_channels, 2)
 
@@ -26,18 +28,23 @@ class GCN(torch.nn.Module):
         # 1. Obtain node embeddings
         for i in range(self.num_layers):
             if i < self.num_layers - 1:
-                x = eval('self.conv_{}(x, edge_index, edge_type)'.format(i))
+                x = eval(
+                    'self.conv_{}(x, edge_index, edge_attr=edge_attr)'.format(i))
                 x = self.relu(x)
             else:
-                x = eval('self.conv_{}(x, edge_index, edge_type)'.format(i))
+                x = eval(
+                    'self.conv_{}(x, edge_index, edge_attr=edge_attr)'.format(i))
 
         # 2. Readout layer
         if self.graph_readout_func == "average":
-            x = global_mean_pool(x,  torch.zeros(x.shape[0], dtype=int, device=x.device))
+            x = global_mean_pool(x,  torch.zeros(
+                x.shape[0], dtype=int, device=x.device))
         if self.graph_readout_func == "max":
-            x = global_max_pool(x,  torch.zeros(x.shape[0], dtype=int, device=x.device))
+            x = global_max_pool(x,  torch.zeros(
+                x.shape[0], dtype=int, device=x.device))
         else:
-            x = global_add_pool(x,  torch.zeros(x.shape[0], dtype=int, device=x.device))
+            x = global_add_pool(x,  torch.zeros(
+                x.shape[0], dtype=int, device=x.device))
             # 3. Apply a final classifier
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin(x)

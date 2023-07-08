@@ -8,7 +8,7 @@ class GraphDataset(Dataset):
         self.graph_dir = os.path.join(os.getcwd(), "{}".format(graph_data_path))
         files = []
         for f in _datapoint_files:
-            graph_file = os.path.join(os.path.join(self.graph_dir, "VTC"), "data_" + f + ".pt")
+            graph_file = os.path.join(self.graph_dir,f + ".pt")
             if os.path.isfile(graph_file):
                 try:
                     torch.load(graph_file)
@@ -33,7 +33,7 @@ class GraphDataset(Dataset):
         graph = torch.load(graph_file)
         file_name = graph_file.split("/")[-1]
         # return graph2
-        return graph, file_name, index
+        return graph.data[0], file_name, graph.label
 
     def __len__(self):
         return len(self.datapoint_files)

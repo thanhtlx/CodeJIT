@@ -6,12 +6,9 @@ from tqdm import tqdm
 import torch
 from jitvul_model.graph_dataset import *
 import random
-from jitvul_model.RGAT import *
-from jitvul_model.RGCN import *
-from jitvul_model.FastRGCN import *
-from jitvul_model.GATClassifier import *
-from jitvul_model.GCN import *
+from jitvul_model.Classifier import *
 import pandas
+BATCH_SIZE = 32
 tqdm.pandas()
 
 def train_model(graph_path, train_file_path,test_file_path, _params, model_path, starting_epochs = 0):
@@ -20,30 +17,12 @@ def train_model(graph_path, train_file_path,test_file_path, _params, model_path,
     train_files = [f.replace("\n", "") for f in tmp_file]
 
     train_dataset = GraphDataset(train_files, graph_path)
-    _trainLoader = DataLoader(train_dataset, collate_fn=collate_batch, shuffle=False)
+    _trainLoader = DataLoader(train_dataset, shuffle=False,batch_size=BATCH_SIZE)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     max_epochs = _params['max_epochs']
-
-    data = {}
-    for  graph, _, index in _trainLoader:
-        data = graph
-        print(data)
-        break
-    if _params['GNN_type'] == "FastRGCN":
-        model = FastRGCN(in_channels = data.num_node_features, hidden_channels=_params['hidden_size'], dropout = _params['dropout_rate'], num_of_layers = _params["num_of_layers"], edge_dim = data.edge_attr.size(-1), graph_readout_func = _params["graph_readout_func"])
-    elif _params['GNN_type'] == "RGAT":
-        model = RGAT(in_channels = data.num_node_features, hidden_channels=_params['hidden_size'], dropout = _params['dropout_rate'], num_of_layers = _params["num_of_layers"], edge_dim = data.edge_attr.size(-1), graph_readout_func = _params["graph_readout_func"])
-    elif _params['GNN_type'] == "RGCN":
-        model = RGCN(in_channels = data.num_node_features, hidden_channels=_params['hidden_size'], dropout = _params['dropout_rate'], num_of_layers = _params["num_of_layers"], edge_dim = data.edge_attr.size(-1), graph_readout_func = _params["graph_readout_func"])
-    elif _params['GNN_type'] == "GCN":
-        model = CodeJITGCN(in_channels = data.num_node_features, hidden_channels=_params['hidden_size'], dropout = _params['dropout_rate'], num_of_layers = _params["num_of_layers"], graph_readout_func = _params["graph_readout_func"])
-    elif _params['GNN_type'] == "GAT":
-        print('GAT')
-        model = GATClassifier(in_channels = data.num_node_features, hidden_channels=_params['hidden_size'], dropout = _params['dropout_rate'], num_of_layers = _params["num_of_layers"], edge_dim = data.edge_attr.size(-1), graph_readout_func = _params["graph_readout_func"])
-    else:
-        print("ERROR:: GNN type " + _params['GNN_type'] + " is not supported.")
-        return
+    
+    model = Classifier()
     model.to(device)
     print(model)
     optimizer = torch.optim.Adam(model.parameters(), lr=_params['lr'], betas=(0.9, 0.999), eps=1e-08)
@@ -66,24 +45,14 @@ def train(curr_epochs, _trainLoader, model, criterion, optimizer, device):
     train_loss = 0
     correct = 0
     model.train()
-    for graph, commit_id, index in _trainLoader:
-        if graph.num_nodes > 1500:
-            graph =  graph.subgraph(torch.LongTensor(list(range(0, 1500))))
-        if index % 500 == 0:
-            print("curr: {}".format(index) + " train loss: {}".format(train_loss / (index + 1)) + " acc:{}".format(correct / (index + 1)))
-        if device != 'cpu':
-            graph = graph.cuda()
-        # if graph.y.item() == 1:
-        #     target = torch.tensor([[0,1]],dtype=float)
-        # else:
-        #     target = torch.tensor([[1,0]],dtype=float)
-        # #if graph.y 
-        target = graph.y
-        target = target.to(device)
-        
-        if graph.num_nodes == 0 or graph.num_edges == 0:
-            continue
-        out = model(graph.x, graph.edge_index, graph.edge_type, graph.edge_attr)
+    for graph, commit_id, target in _trainLoader:
+        graph = graph.to(device)
+        target = torch.tensor(target,device=device)
+        # target = target.to(device)
+        out = model(graph)
+        print(graph.shape)
+        print(target.shape)
+        print(out.shape)
         loss = criterion(out, target)
         optimizer.zero_grad()
         loss.backward()
@@ -93,7 +62,7 @@ def train(curr_epochs, _trainLoader, model, criterion, optimizer, device):
         # print('pred',predicted)
         # print('-'*3)
         correct += predicted.eq(target).sum().item()
-        del graph.x, graph.edge_index, graph.edge_type, graph.y, graph, predicted, out
+        del graph, predicted, out
     avg_train_loss = train_loss / len(_trainLoader)
     acc = correct / len(_trainLoader)
     print("correct:", correct)
@@ -112,22 +81,7 @@ def test_model(graph_path, test_file_path, _params, model_path):
     test_dataset = GraphDataset(test_files, graph_path)
     _testLoader = DataLoader(test_dataset, collate_fn=collate_batch, shuffle=False)
 
-    data = {}
-    for  graph, _, index in _testLoader:
-        data = graph
-        break
-    if _params['GNN_type'] == "FastRGCN":
-        test_model = FastRGCN(in_channels = data.num_node_features, hidden_channels=_params['hidden_size'], dropout = _params['dropout_rate'], num_of_layers = _params["num_of_layers"], edge_dim = data.edge_attr.size(-1), graph_readout_func = _params["graph_readout_func"])
-    elif _params['GNN_type'] == "RGAT":
-        test_model = RGAT(in_channels = data.num_node_features, hidden_channels=_params['hidden_size'], dropout = _params['dropout_rate'], num_of_layers = _params["num_of_layers"], edge_dim = data.edge_attr.size(-1), graph_readout_func = _params["graph_readout_func"])
-    elif _params['GNN_type'] == "RGCN":
-        test_model = RGCN(in_channels = data.num_node_features, hidden_channels=_params['hidden_size'], dropout = _params['dropout_rate'], num_of_layers = _params["num_of_layers"], edge_dim = data.edge_attr.size(-1), graph_readout_func = _params["graph_readout_func"])
-    elif _params['GNN_type'] == "GAT":
-        test_model = GATClassifier(in_channels = data.num_node_features, hidden_channels=_params['hidden_size'], dropout = _params['dropout_rate'], num_of_layers = _params["num_of_layers"], edge_dim = data.edge_attr.size(-1), graph_readout_func = _params["graph_readout_func"])
-    else:
-        print("ERROR:: GNN type " + _params['GNN_type'] + " is not supported.")
-        return
-
+    test_model = Classifier()
     test_model.load_state_dict(torch.load(os.path.join(os.path.join(os.getcwd(),model_path), _params['model_name'] + ".pt")))
     test_model.eval()
     evaluate_metrics(_params['model_name'], test_model, _testLoader, device)
@@ -139,18 +93,10 @@ def evaluate_metrics(model_name, model, _loader, device):
     model.to(device)
     with torch.no_grad():
         all_predictions, all_targets, all_probs = [], [], []
-        for graph, commit_id, index in _loader:
-            if graph.num_nodes > 1500:
-                graph =  graph.subgraph(torch.LongTensor(list(range(0, 1500))))
-            if device != 'cpu':
-                graph = graph.cuda()
-            target = graph.y
-            if graph.num_nodes == 0 or graph.num_edges == 0:
-                print(commit_id)
-                continue
-            
-
-            out = model(graph.x, graph.edge_index, graph.edge_type, graph.edge_attr)
+        for graph, commit_id, target in _loader:
+            graph = graph.to(device)
+            out = model(graph)
+            target = torch.tensor(target)
             target = target.cpu().detach().numpy()
             pred = out.argmax(dim=1).cpu().detach().numpy()
             pro_out = out.tolist()[0]
@@ -159,7 +105,7 @@ def evaluate_metrics(model_name, model, _loader, device):
             all_probs.append(prob_1)
             all_predictions.append(pred)
             all_targets.append(target)
-            del graph.x, graph.edge_index, graph.edge_type, graph.y, graph
+            del graph
         fpr, tpr, _ = roc_curve(all_targets, all_probs)
         auc_score = round(auc(fpr, tpr) * 100, 2)
         acc = round(accuracy_score(all_targets, all_predictions) * 100, 2)

@@ -107,7 +107,7 @@ def train(curr_epochs, _trainLoader, model, criterion, optimizer, device):
         if graph.num_nodes == 0 or graph.num_edges == 0:
             continue
         out = model(graph.x, graph.edge_index, graph.edge_type,
-                    graph.edge_attr, embed)
+                    graph.edge_attr, embed,msg)
         loss = criterion(out, target)
         optimizer.zero_grad()
         loss.backward()
@@ -191,7 +191,7 @@ def evaluate_metrics(model_name, model, _loader, device):
                 continue
 
             out = model(graph.x, graph.edge_index, graph.edge_type,
-                        graph.edge_attr, embed)
+                        graph.edge_attr, embed,msg)
             target = target.cpu().detach().numpy()
             pred = out.argmax(dim=1).cpu().detach().numpy()
             prob_1 = out.cpu().detach().numpy()[0][1]

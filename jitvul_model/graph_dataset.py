@@ -10,7 +10,8 @@ class GraphDataset(Dataset):
             os.getcwd(), "{}".format(graph_data_path))
         files = []
         for f in _datapoint_files:
-            graph_file = os.path.join(os.path.join(self.graph_dir,"VTC"), "data_" + f + ".pt")
+            graph_file = os.path.join(os.path.join(
+                self.graph_dir, "VTC"), "data_" + f + ".pt")
             if os.path.isfile(graph_file):
                 try:
                     torch.load(graph_file)
@@ -18,7 +19,8 @@ class GraphDataset(Dataset):
                 except:
                     print("graph load exception:", graph_file)
             else:
-                graph_file = os.path.join(os.path.join(self.graph_dir, "VFC"), "data_" + f + ".pt")
+                graph_file = os.path.join(os.path.join(
+                    self.graph_dir, "VFC"), "data_" + f + ".pt")
                 try:
                     torch.load(graph_file)
                     files.append(graph_file)
@@ -35,7 +37,10 @@ class GraphDataset(Dataset):
         embed_file = 'code/'+file_name
         embed_file = embed_file.replace('data_', '')
         embed = torch.load(embed_file)
-        return graph, embed, file_name, index
+        embed_msg = 'msg/' + file_name
+        embed_msg = embed_msg.replace('data_', '')
+        msg = torch.load(embed_msg)
+        return graph, embed, msg, file_name, index
 
     def __len__(self):
         return len(self.datapoint_files)

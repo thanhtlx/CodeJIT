@@ -7,6 +7,7 @@ from torch.nn import ReLU, Softmax, LeakyReLU
 
 # upscale ctg and convert same range value
 
+
 class RGCN4(torch.nn.Module):
     def __init__(self, in_channels, hidden_channels, edge_dim, num_relations=4, dropout=0.1, num_of_layers=2, graph_readout_func="add"):
         super(RGCN4, self).__init__()
@@ -24,7 +25,7 @@ class RGCN4(torch.nn.Module):
         self.lin = Linear(hidden_channels, 2)
         self.lin_ctg = Linear(hidden_channels, 768)
         # self.merge = Linear(,hidden_channels)
-        self.out = Linear(hidden_channels + 768, 2)
+        self.out = Linear(768 + 768, 2)
 
     def forward(self, x, edge_index, edge_type, edge_attr, embed):
         # 1. Obtain node embeddings

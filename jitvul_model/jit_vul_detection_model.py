@@ -11,28 +11,13 @@ from jitvul_model.RGCN0 import *
 from jitvul_model.RGCN2 import *
 from jitvul_model.RGCN3 import *
 from jitvul_model.RGCN4 import *
+from jitvul_model.RGCN5 import *
 import pandas
 import json
 tqdm.pandas()
 
 
-def train_model(graph_path, train_file_path, test_file_path, _params, model_path, starting_epochs=0):
-    torch.manual_seed(12345)
-    tmp_file = open(train_file_path, "r").readlines()
-    train_files = [f.replace("\n", "") for f in tmp_file]
-
-    train_dataset = GraphDataset(train_files, graph_path)
-    _trainLoader = DataLoader(
-        train_dataset, collate_fn=collate_batch, shuffle=False)
-
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    max_epochs = _params['max_epochs']
-
-    data = {}
-    for graph, embed, _, index in _trainLoader:
-        data = graph
-        print(data)
-        break
+def get_model(_params, data):
     if _params['GNN_type'] == "RGCN":
         model = RGCN(in_channels=data.num_node_features, hidden_channels=_params['hidden_size'], dropout=_params['dropout_rate'],
                      num_of_layers=_params["num_of_layers"], edge_dim=data.edge_attr.size(-1), graph_readout_func=_params["graph_readout_func"])
@@ -48,7 +33,34 @@ def train_model(graph_path, train_file_path, test_file_path, _params, model_path
     elif _params['GNN_type'] == "RGCN4":
         model = RGCN4(in_channels=data.num_node_features, hidden_channels=_params['hidden_size'], dropout=_params['dropout_rate'],
                       num_of_layers=_params["num_of_layers"], edge_dim=data.edge_attr.size(-1), graph_readout_func=_params["graph_readout_func"])
+    elif _params['GNN_type'] == "RGCN5":
+        model = RGCN5(in_channels=data.num_node_features, hidden_channels=_params['hidden_size'], dropout=_params['dropout_rate'],
+                      num_of_layers=_params["num_of_layers"], edge_dim=data.edge_attr.size(-1), graph_readout_func=_params["graph_readout_func"])
     else:
+        print("ERROR:: GNN type " + _params['GNN_type'] + " is not supported.")
+        return
+    return model
+
+
+def train_model(graph_path, train_file_path, test_file_path, _params, model_path, starting_epochs=0):
+    torch.manual_seed(12345)
+    tmp_file = open(train_file_path, "r").readlines()
+    train_files = [f.replace("\n", "") for f in tmp_file]
+
+    train_dataset = GraphDataset(train_files, graph_path)
+    _trainLoader = DataLoader(
+        train_dataset, collate_fn=collate_batch, shuffle=False)
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    max_epochs = _params['max_epochs']
+
+    data = {}
+    for graph, embed, msg, _, index in _trainLoader:
+        data = graph
+        print(data)
+        break
+    model = get_model(_params, data)
+    if model is None:
         print("ERROR:: GNN type " + _params['GNN_type'] + " is not supported.")
         return
     model.to(device)
@@ -76,7 +88,7 @@ def train(curr_epochs, _trainLoader, model, criterion, optimizer, device):
     train_loss = 0
     correct = 0
     model.train()
-    for graph, embed, commit_id, index in _trainLoader:
+    for graph, embed, msg, commit_id, index in _trainLoader:
         commit_id = commit_id[5:-3]
 
         if graph.num_nodes > 1500:
@@ -89,6 +101,7 @@ def train(curr_epochs, _trainLoader, model, criterion, optimizer, device):
         if device != 'cpu':
             graph = graph.cuda()
             embed = embed.cuda()
+            msg = msg.cuda()
 
         target = graph.y
         if graph.num_nodes == 0 or graph.num_edges == 0:
@@ -125,25 +138,29 @@ def test_model(graph_path, test_file_path, _params, model_path):
         test_dataset, collate_fn=collate_batch, shuffle=False)
 
     data = {}
-    for graph, embed, _, index in _testLoader:
+    for graph, embed, msg, _, index in _testLoader:
         data = graph
         break
-    if _params['GNN_type'] == "RGCN":
-        test_model = RGCN(in_channels=data.num_node_features, hidden_channels=_params['hidden_size'], dropout=_params['dropout_rate'],
-                          num_of_layers=_params["num_of_layers"], edge_dim=data.edge_attr.size(-1), graph_readout_func=_params["graph_readout_func"])
-    elif _params['GNN_type'] == "RGCN0":
-        test_model = RGCN0(in_channels=data.num_node_features, hidden_channels=_params['hidden_size'], dropout=_params['dropout_rate'],
-                           num_of_layers=_params["num_of_layers"], edge_dim=data.edge_attr.size(-1), graph_readout_func=_params["graph_readout_func"])
-    elif _params['GNN_type'] == "RGCN2":
-        test_model = RGCN2(in_channels=data.num_node_features, hidden_channels=_params['hidden_size'], dropout=_params['dropout_rate'],
-                           num_of_layers=_params["num_of_layers"], edge_dim=data.edge_attr.size(-1), graph_readout_func=_params["graph_readout_func"])
-    elif _params['GNN_type'] == "RGCN3":
-        test_model = RGCN3(in_channels=data.num_node_features, hidden_channels=_params['hidden_size'], dropout=_params['dropout_rate'],
-                           num_of_layers=_params["num_of_layers"], edge_dim=data.edge_attr.size(-1), graph_readout_func=_params["graph_readout_func"])
-    elif _params['GNN_type'] == "RGCN4":
-        test_model = RGCN4(in_channels=data.num_node_features, hidden_channels=_params['hidden_size'], dropout=_params['dropout_rate'],
-                           num_of_layers=_params["num_of_layers"], edge_dim=data.edge_attr.size(-1), graph_readout_func=_params["graph_readout_func"])
-    else:
+    test_model = get_model(_params, data)
+    # if _params['GNN_type'] == "RGCN":
+    #     test_model = RGCN(in_channels=data.num_node_features, hidden_channels=_params['hidden_size'], dropout=_params['dropout_rate'],
+    #                       num_of_layers=_params["num_of_layers"], edge_dim=data.edge_attr.size(-1), graph_readout_func=_params["graph_readout_func"])
+    # elif _params['GNN_type'] == "RGCN0":
+    #     test_model = RGCN0(in_channels=data.num_node_features, hidden_channels=_params['hidden_size'], dropout=_params['dropout_rate'],
+    #                        num_of_layers=_params["num_of_layers"], edge_dim=data.edge_attr.size(-1), graph_readout_func=_params["graph_readout_func"])
+    # elif _params['GNN_type'] == "RGCN2":
+    #     test_model = RGCN2(in_channels=data.num_node_features, hidden_channels=_params['hidden_size'], dropout=_params['dropout_rate'],
+    #                        num_of_layers=_params["num_of_layers"], edge_dim=data.edge_attr.size(-1), graph_readout_func=_params["graph_readout_func"])
+    # elif _params['GNN_type'] == "RGCN3":
+    #     test_model = RGCN3(in_channels=data.num_node_features, hidden_channels=_params['hidden_size'], dropout=_params['dropout_rate'],
+    #                        num_of_layers=_params["num_of_layers"], edge_dim=data.edge_attr.size(-1), graph_readout_func=_params["graph_readout_func"])
+    # elif _params['GNN_type'] == "RGCN4":
+    #     test_model = RGCN4(in_channels=data.num_node_features, hidden_channels=_params['hidden_size'], dropout=_params['dropout_rate'],
+    #                        num_of_layers=_params["num_of_layers"], edge_dim=data.edge_attr.size(-1), graph_readout_func=_params["graph_readout_func"])
+    # else:
+    #     print("ERROR:: GNN type " + _params['GNN_type'] + " is not supported.")
+    #     return
+    if test_model is None:
         print("ERROR:: GNN type " + _params['GNN_type'] + " is not supported.")
         return
 
@@ -161,13 +178,14 @@ def evaluate_metrics(model_name, model, _loader, device):
     model.to(device)
     with torch.no_grad():
         all_predictions, all_targets, all_probs = [], [], []
-        for graph, embed, commit_id, index in _loader:
+        for graph, embed, msg, commit_id, index in _loader:
             commit_id = commit_id[5:-3]
             if graph.num_nodes > 1500:
                 graph = graph.subgraph(torch.LongTensor(list(range(0, 1500))))
             if device != 'cpu':
                 graph = graph.cuda()
                 embed = embed.cuda()
+                msg = msg.cuda()
             target = graph.y
             if graph.num_nodes == 0 or graph.num_edges == 0:
                 continue

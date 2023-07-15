@@ -19,6 +19,7 @@ if __name__ == '__main__':
     parser.add_argument('--dropout_rate', default= 0.2)
     parser.add_argument('--max_epochs', default= 50)
     parser.add_argument('--num_of_layers', default= 2)
+    parser.add_argument('--codebert_hidden_size',default=768)
     
     args = parser.parse_args()
 

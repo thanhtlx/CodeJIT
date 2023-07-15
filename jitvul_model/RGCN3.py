@@ -5,12 +5,12 @@ from torch_geometric.nn import global_mean_pool, global_max_pool, global_add_poo
 import torch
 from torch.nn import ReLU, Softmax, LeakyReLU
 
-# normal merge 
-# no have merge layer 
 
-class RGCN(torch.nn.Module):
+# convert to same value range and merge
+
+class RGCN3(torch.nn.Module):
     def __init__(self, in_channels, hidden_channels, edge_dim, num_relations=4, dropout=0.1, num_of_layers=2, graph_readout_func="add"):
-        super(RGCN, self).__init__()
+        super(RGCN3, self).__init__()
         torch.manual_seed(12345)
         self.num_layers = num_of_layers
         self.num_of_relations = num_relations
@@ -24,8 +24,8 @@ class RGCN(torch.nn.Module):
         self.relu = ReLU(inplace=True)
         self.lin = Linear(hidden_channels, 2)
         self.lin_bert = Linear(768, hidden_channels)
-        self.merge = Linear(hidden_channels*2, hidden_channels)
-        self.out = Linear(hidden_channels, 2)
+        # self.merge = Linear(768*2, 2)
+        self.out = Linear(768 + hidden_channels, 2)
 
     def forward(self, x, edge_index, edge_type, edge_attr, embed):
         # 1. Obtain node embeddings
@@ -48,7 +48,9 @@ class RGCN(torch.nn.Module):
             # 3. Apply a final classifier
         x = F.dropout(x, p=self.dropout, training=self.training)
         # codebert
-        y = self.lin_bert(embed)
+        x = self.relu(x)
+
+        y = self.relu(embed)
 
         # merge
         merge = torch.cat((x, y), dim=1)

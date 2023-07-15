@@ -3,3 +3,10 @@ Data
 .idea
 env
 .vscode
+*.zip
+diff
+changes
+CodeJIT_Dataset_Commit_Hash.csv
+midas_time.csv
+*.pkl
+*.json

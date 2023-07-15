@@ -88,6 +88,7 @@ def train(curr_epochs, _trainLoader, model, criterion, optimizer, device):
                   (index + 1)) + " acc:{}".format(correct / (index + 1)))
         if device != 'cpu':
             graph = graph.cuda()
+            embed = embed.cuda()
 
         target = graph.y
         if graph.num_nodes == 0 or graph.num_edges == 0:
@@ -166,6 +167,7 @@ def evaluate_metrics(model_name, model, _loader, device):
                 graph = graph.subgraph(torch.LongTensor(list(range(0, 1500))))
             if device != 'cpu':
                 graph = graph.cuda()
+                embed = embed.cuda()
             target = graph.y
             if graph.num_nodes == 0 or graph.num_edges == 0:
                 continue

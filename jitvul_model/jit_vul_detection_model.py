@@ -59,11 +59,19 @@ def train(curr_epochs, _trainLoader, model, criterion, optimizer, device):
     train_loss = 0
     correct = 0
     model.train()
+    index = 0
     for input_ids, attn, label, commit_id in _trainLoader:
         if device != "cpu":
             input_ids = input_ids.cuda()
             attn = attn.cuda()
             label = label.cuda()
+        index += 1
+        if index % 500 == 0:
+            print(
+                "curr: {}".format(index)
+                + " train loss: {}".format(train_loss / (index + 1))
+                + " acc:{}".format(correct / (index + 1))
+            )
         target = label
         out = model(input_ids, attn)
         loss = criterion(out, target)

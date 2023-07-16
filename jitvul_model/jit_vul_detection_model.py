@@ -54,7 +54,7 @@ def train(curr_epochs, _trainLoader, model, criterion, optimizer, device):
             label = label.cuda()
         target = label
         out = model(input_ids, attn)
-        print(out.shape,target.shape)
+        print(out,target)
         loss = criterion(out, target)
         optimizer.zero_grad()
         loss.backward()

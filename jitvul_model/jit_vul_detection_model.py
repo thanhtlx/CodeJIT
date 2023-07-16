@@ -12,6 +12,9 @@ from jitvul_model.RGCN2 import *
 from jitvul_model.RGCN3 import *
 from jitvul_model.RGCN4 import *
 from jitvul_model.RGCN5 import *
+from jitvul_model.RGCN6 import *
+from jitvul_model.RGCN7 import *
+from jitvul_model.RGCN8 import *
 import pandas
 import json
 tqdm.pandas()
@@ -35,6 +38,15 @@ def get_model(_params, data):
                       num_of_layers=_params["num_of_layers"], edge_dim=data.edge_attr.size(-1), graph_readout_func=_params["graph_readout_func"])
     elif _params['GNN_type'] == "RGCN5":
         model = RGCN5(in_channels=data.num_node_features, hidden_channels=_params['hidden_size'], dropout=_params['dropout_rate'],
+                      num_of_layers=_params["num_of_layers"], edge_dim=data.edge_attr.size(-1), graph_readout_func=_params["graph_readout_func"])
+    elif _params['GNN_type'] == "RGCN6":
+        model = RGCN6(in_channels=data.num_node_features, hidden_channels=_params['hidden_size'], dropout=_params['dropout_rate'],
+                      num_of_layers=_params["num_of_layers"], edge_dim=data.edge_attr.size(-1), graph_readout_func=_params["graph_readout_func"])
+    elif _params['GNN_type'] == "RGCN7":
+        model = RGCN7(in_channels=data.num_node_features, hidden_channels=_params['hidden_size'], dropout=_params['dropout_rate'],
+                      num_of_layers=_params["num_of_layers"], edge_dim=data.edge_attr.size(-1), graph_readout_func=_params["graph_readout_func"])
+    elif _params['GNN_type'] == "RGCN8":
+        model = RGCN8(in_channels=data.num_node_features, hidden_channels=_params['hidden_size'], dropout=_params['dropout_rate'],
                       num_of_layers=_params["num_of_layers"], edge_dim=data.edge_attr.size(-1), graph_readout_func=_params["graph_readout_func"])
     else:
         print("ERROR:: GNN type " + _params['GNN_type'] + " is not supported.")

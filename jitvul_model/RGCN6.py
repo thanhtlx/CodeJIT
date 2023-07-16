@@ -8,9 +8,9 @@ from torch.nn import ReLU, Softmax, LeakyReLU
 # upscale ctg and convert same range value
 
 
-class RGCN5(torch.nn.Module):
+class RGCN6(torch.nn.Module):
     def __init__(self, in_channels, hidden_channels, edge_dim, num_relations=4, dropout=0.1, num_of_layers=2, graph_readout_func="add"):
-        super(RGCN5, self).__init__()
+        super(RGCN6, self).__init__()
         torch.manual_seed(12345)
         self.num_layers = num_of_layers
         self.num_of_relations = num_relations

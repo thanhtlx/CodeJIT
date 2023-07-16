@@ -103,8 +103,8 @@ class GraphDataset(Dataset):
                 )
                 ids_hunks.append(encode.input_ids)
                 attn_hunks.append(encode.attention_mask)
-            ids_hunks = torch.stack(ids_hunks)
-            attn_hunks = torch.stack(attn_hunks)
+            ids_hunks = torch.cat(ids_hunks, dim=0)
+            attn_hunks = torch.cat(attn_hunks, dim=0)
             # attn_hunks = torch.tensor(ids_hunks)
             print(ids_hunks.shape, attn_hunks.shape)
 

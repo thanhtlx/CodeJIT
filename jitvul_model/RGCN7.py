@@ -23,11 +23,11 @@ class RGCN5(torch.nn.Module):
                 exec('self.conv_{} = RGCNConv(hidden_channels, hidden_channels,num_relations=self.num_of_relations, add_self_loops=False, dropout = dropout)'.format(i))
         self.relu = ReLU(inplace=True)
         self.lin = Linear(hidden_channels, 2)
-        self.lin_ctg = Linear(hidden_channels, 256)
-        self.dan1 = Linear(256, 256)
+        self.lin_ctg = Linear(hidden_channels, 768)
+        self.dan1 = Linear(768, 768)
         # self.dan2 = Linear(768, 768)
         # self.merge = Linear(,hidden_channels)
-        self.out = Linear(256*2, 2)
+        self.out = Linear(768*2, 2)
 
     def forward(self, x, edge_index, edge_type, edge_attr, embed, msg=None):
         # 1. Obtain node embeddings

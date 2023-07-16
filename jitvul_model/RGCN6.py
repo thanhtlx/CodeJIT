@@ -24,7 +24,7 @@ class RGCN5(torch.nn.Module):
         self.relu = ReLU(inplace=True)
         self.lin = Linear(hidden_channels, 2)
         self.lin_ctg = Linear(hidden_channels, 768)
-        self.dan1 = Linear(256, 768)
+        self.dan1 = Linear(768, 768)
         self.dan2 = Linear(768, 768)
         # self.merge = Linear(,hidden_channels)
         self.out = Linear(768*3, 2)

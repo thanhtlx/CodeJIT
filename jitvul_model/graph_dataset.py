@@ -108,7 +108,7 @@ class GraphDataset(Dataset):
             # attn_hunks = torch.tensor(ids_hunks)
             # print(ids_hunks.shape, attn_hunks.shape)
 
-            label = torch.tensor([label], dtype=int)
+            label = torch.tensor(label, dtype=int)
             self.examples.append(Example(cm, ids_hunks, attn_hunks, label))
 
     def __getitem__(self, index):

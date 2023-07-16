@@ -17,7 +17,7 @@ class Clasifier(nn.Module):
         outputs = self.encoder(input_ids=inputs_ids, attention_mask=attn_masks)[0]
         # 24*256*768
         # =>  24*768
-        # mean 
+        # mean
         # DAN
         # classifier
         outputs = outputs[:, 0, :]
@@ -28,4 +28,3 @@ class Clasifier(nn.Module):
         out = self.relu(out)
         out = self.out(out)
         return out
-

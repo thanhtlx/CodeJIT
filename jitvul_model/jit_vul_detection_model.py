@@ -71,7 +71,7 @@ def train(curr_epochs, _trainLoader, model, criterion, optimizer, device):
         loss.backward()
         optimizer.step()
         train_loss += loss.item()
-        _, predicted = out.max(1)
+        _, predicted = out.max(0)
         correct += predicted.eq(target).sum().item()
         del input_ids, attn, label, predicted, out
     avg_train_loss = train_loss / len(_trainLoader)
@@ -118,10 +118,10 @@ def evaluate_metrics(model_name, model, _loader, device):
             target = label
             out = model(input_ids, attn)
             target = target.cpu().detach().numpy()
-            pred = out.argmax(dim=1).cpu().detach().numpy()
-            prob_1 = out.cpu().detach().numpy()[0][1]
+            pred = out.argmax(dim=0).cpu().detach().numpy()
+            prob_1 = out.cpu().detach().numpy()[1]
             write_to_file_results.append(
-                {"commit_id": commit_id, "predict": pred[0], "target": graph.y.item()}
+                {"commit_id": commit_id, "predict": pred, "target": label.item()}
             )
             all_probs.append(prob_1)
             all_predictions.append(pred)

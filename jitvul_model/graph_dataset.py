@@ -7,34 +7,44 @@ import re
 
 
 def preprocess_code_line(code):
-    code = code.replace('(', ' ').replace(')', ' ').replace('{', ' ').replace('}', ' ').replace('[', ' ').replace(']',
-                                                                                                                  ' ').replace(
-        '.', ' ').replace(':', ' ').replace(';', ' ').replace(',', ' ').replace(' _ ', '_')
-    code = re.sub('``.*``', '<STR>', code)
-    code = re.sub("'.*'", '<STR>', code)
-    code = re.sub('".*"', '<STR>', code)
-    code = re.sub('\d+', '<NUM>', code)
+    code = (
+        code.replace("(", " ")
+        .replace(")", " ")
+        .replace("{", " ")
+        .replace("}", " ")
+        .replace("[", " ")
+        .replace("]", " ")
+        .replace(".", " ")
+        .replace(":", " ")
+        .replace(";", " ")
+        .replace(",", " ")
+        .replace(" _ ", "_")
+    )
+    code = re.sub("``.*``", "<STR>", code)
+    code = re.sub("'.*'", "<STR>", code)
+    code = re.sub('".*"', "<STR>", code)
+    code = re.sub("\d+", "<NUM>", code)
     code = code.split()
-    code = ' '.join(code)
+    code = " ".join(code)
     return code.strip()
 
 
 def hunk_empty(hunk):
-    if hunk.strip() == '':
+    if hunk.strip() == "":
         return True
 
 
 def get_hunk_from_diff(diff):
     hunk_list = []
-    hunk = ''
+    hunk = ""
     for line in diff.splitlines():
-        if line.startswith(('+', '-')):
-            hunk += line.strip() + '\n'
+        if line.startswith(("+", "-")):
+            hunk += line.strip() + "\n"
         else:
             if not hunk_empty(hunk):  # finish a hunk
                 hunk = hunk[:-1]
                 hunk_list.append(hunk)
-                hunk = ''
+                hunk = ""
     if not hunk_empty(hunk):
         hunk_list.append(hunk)
     return hunk_list
@@ -54,30 +64,30 @@ class GraphDataset(Dataset):
         self.examples = list()
         self.tokenizer = tokenizer
         df = pd.read_csv(data_path)
-        cms = set(df['commit_id'])
-        self.max_tokens = _params['MAX_TOKEN']
-        self.max_hunks = _params['MAX_HUNKS']
+        cms = set(df["commit_id"])
+        self.max_tokens = _params["MAX_TOKEN"]
+        self.max_hunks = _params["MAX_HUNKS"]
         for cm in cms:
-            tmp_df = df[df['commit_id'] == cm]
+            tmp_df = df[df["commit_id"] == cm]
             hunks_cm = list()
             label = None
             for _, row in tmp_df.iterrows():
-                diff = row['diff']
-                label = row['label']
+                diff = row["diff"]
+                label = row["label"]
                 hunks = get_hunk_from_diff(diff)
                 for hunk in hunks:
                     hunk_tokens = list()
                     for line in hunk.splitlines():
-                        if line.startswith('+'):
+                        if line.startswith("+"):
                             hunk_tokens += ["ADD"]
-                        if line.startswith('-'):
+                        if line.startswith("-"):
                             hunk_tokens += ["DEL"]
                         line = preprocess_code_line(line[1:])
                         hunk_tokens += line.split()
-                    hunks_cm.append(' '.join(hunk_tokens))
+                    hunks_cm.append(" ".join(hunk_tokens))
             # append(sample)
             # hunk_map[cm] = hunks_cm
-            hunks_cm = hunks_cm[:self.max_hunks]
+            hunks_cm = hunks_cm[: self.max_hunks]
             ids_hunks = list()
             attn_hunks = list()
             for text in hunks_cm:
@@ -86,15 +96,20 @@ class GraphDataset(Dataset):
                     truncation=True,
                     add_special_tokens=True,
                     max_length=256,
-                    padding='max_length',
+                    padding="max_length",
                     return_attention_mask=True,
                     return_token_type_ids=False,
-                    return_tensors='pt',
+                    return_tensors="pt",
                 )
                 ids_hunks.append(encode.input_ids)
-                attn_hunks.append(encode.input_ids)
-            self.examples.append(Example(cm, torch.tensor(
-                ids_hunks), torch.tensor(attn_hunks), torch.tensor([label], dtype = int)))
+                attn_hunks.append(encode.attention_mask)
+            ids_hunks = torch.stack(ids_hunks)
+            attn_hunks = torch.stack(attn_hunks)
+            # attn_hunks = torch.tensor(ids_hunks)
+            print(ids_hunks.shape, attn_hunks.shape)
+
+            label = torch.tensor([label], dtype=int)
+            self.examples.append(Example(cm, ids_hunks, attn_hunks, label))
 
     def __getitem__(self, index):
         # self.commit_id = commit_id
@@ -103,8 +118,10 @@ class GraphDataset(Dataset):
         # self.label = label
         item = self.examples[index]
         return item.input_ids, item.attn, item.label, item.commit_id
+
     def __len__(self):
         return len(self.examples)
+
 
 # only batch = 1
 

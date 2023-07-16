@@ -1,0 +1,6 @@
+torch
+transformers
+sklearn
+pandas 
+torch_geometric
+gensim

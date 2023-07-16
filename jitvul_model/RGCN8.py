@@ -25,7 +25,7 @@ class RGCN8(torch.nn.Module):
         self.lin = Linear(hidden_channels, 2)
         self.lin_ctg = Linear(hidden_channels, 768)
         self.dan1 = Linear(768, 768)
-        # self.dan2 = Linear(768, 768)
+        self.dan2 = Linear(768, 768)
         # self.merge = Linear(,hidden_channels)
         self.out = Linear(768, 2)
 
@@ -55,6 +55,7 @@ class RGCN8(torch.nn.Module):
         # 
         # 
         embed = self.dan1(embed)
+        embed = self.dan2(embed)
         y = self.relu(embed)
         # z = self.relu(msg)
         # merge

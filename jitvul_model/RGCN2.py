@@ -9,7 +9,7 @@ from torch.nn import ReLU, Softmax, LeakyReLU
 # layer merge 
 
 class RGCN2(torch.nn.Module):
-    def __init__(self, in_channels, hidden_channels, edge_dim, num_relations=4, dropout=0.1, num_of_layers=2, graph_readout_func="add"):
+    def __init__(self, in_channels, hidden_channels, edge_dim, num_relations=4, dropout=0.1, num_of_layers=2, graph_readout_func="add", code_embedding_size=768):
         super(RGCN2, self).__init__()
         torch.manual_seed(12345)
         self.num_layers = num_of_layers
@@ -23,8 +23,8 @@ class RGCN2(torch.nn.Module):
                 exec('self.conv_{} = RGCNConv(hidden_channels, hidden_channels,num_relations=self.num_of_relations, add_self_loops=False, dropout = dropout)'.format(i))
         self.relu = ReLU(inplace=True)
         self.lin = Linear(hidden_channels, 2)
-        self.lin_ctg = Linear(hidden_channels, 768)
-        self.merge = Linear(768*2, hidden_channels)
+        self.lin_ctg = Linear(hidden_channels, code_embedding_size)
+        self.merge = Linear(code_embedding_size*2, hidden_channels)
         self.out = Linear(hidden_channels, 2)
 
     def forward(self, x, edge_index, edge_type, edge_attr, embed):

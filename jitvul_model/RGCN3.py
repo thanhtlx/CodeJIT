@@ -9,7 +9,7 @@ from torch.nn import ReLU, Softmax, LeakyReLU
 # convert to same value range and merge
 
 class RGCN3(torch.nn.Module):
-    def __init__(self, in_channels, hidden_channels, edge_dim, num_relations=4, dropout=0.1, num_of_layers=2, graph_readout_func="add"):
+    def __init__(self, in_channels, hidden_channels, edge_dim, num_relations=4, dropout=0.1, num_of_layers=2, graph_readout_func="add",code_embedding_size=768):
         super(RGCN3, self).__init__()
         torch.manual_seed(12345)
         self.num_layers = num_of_layers
@@ -23,9 +23,9 @@ class RGCN3(torch.nn.Module):
                 exec('self.conv_{} = RGCNConv(hidden_channels, hidden_channels,num_relations=self.num_of_relations, add_self_loops=False, dropout = dropout)'.format(i))
         self.relu = ReLU(inplace=True)
         self.lin = Linear(hidden_channels, 2)
-        self.lin_bert = Linear(768, hidden_channels)
+        self.lin_bert = Linear(code_embedding_size, hidden_channels)
         # self.merge = Linear(768*2, 2)
-        self.out = Linear(768 + hidden_channels, 2)
+        self.out = Linear(code_embedding_size + hidden_channels, 2)
 
     def forward(self, x, edge_index, edge_type, edge_attr, embed):
         # 1. Obtain node embeddings

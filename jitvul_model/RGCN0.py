@@ -10,7 +10,7 @@ from torch.nn import ReLU, Softmax, LeakyReLU
 
 
 class RGCN0(torch.nn.Module):
-    def __init__(self, in_channels, hidden_channels, edge_dim, num_relations=4, dropout=0.1, num_of_layers=2, graph_readout_func="add"):
+    def __init__(self, in_channels, hidden_channels, edge_dim, num_relations=4, dropout=0.1, num_of_layers=2, graph_readout_func="add",code_embedding_size=768):
         super(RGCN0, self).__init__()
         torch.manual_seed(12345)
         torch.manual_seed(12345)

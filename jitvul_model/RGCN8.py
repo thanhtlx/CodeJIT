@@ -47,7 +47,7 @@ class RGCN8(torch.nn.Module):
                 )
         self.relu = ReLU(inplace=True)
         self.lin = Linear(hidden_channels, 2)
-        self.lin_ctg = Linear(hidden_channels, code_embedding_size)
+        print(code_embedding_size)
         self.dan1 = Linear(code_embedding_size, code_embedding_size)
         self.dan2 = Linear(code_embedding_size, code_embedding_size)
         # self.merge = Linear(,hidden_channels)

@@ -38,7 +38,7 @@ if __name__ == "__main__":
         "model_name": args.model_name,
         "GNN_type": args.GNN_type,
         "graph_readout_func": args.graph_readout_func,
-        "code_embedding_size": args.code_embedding_size,
+        "code_embedding_size": int(args.code_embedding_size),
     }
     if mode == "train_and_test":
         print()

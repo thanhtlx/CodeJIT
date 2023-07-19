@@ -26,7 +26,7 @@ class RGCN0(torch.nn.Module):
         self.relu = ReLU(inplace=True)
         self.lin = Linear(hidden_channels, 2)
 
-    def forward(self, x, edge_index, edge_type, edge_attr, embed):
+    def forward(self, x, edge_index, edge_type, edge_attr, embed,msg):
         # 1. Obtain node embeddings
         for i in range(self.num_layers):
             if i < self.num_layers - 1:

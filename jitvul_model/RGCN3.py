@@ -27,7 +27,7 @@ class RGCN3(torch.nn.Module):
         # self.merge = Linear(768*2, 2)
         self.out = Linear(code_embedding_size + hidden_channels, 2)
 
-    def forward(self, x, edge_index, edge_type, edge_attr, embed):
+    def forward(self, x, edge_index, edge_type, edge_attr, embed,msg):
         # 1. Obtain node embeddings
         for i in range(self.num_layers):
             if i < self.num_layers - 1:

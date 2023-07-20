@@ -14,9 +14,9 @@ from sklearn import preprocessing
 from sklearn.preprocessing import MinMaxScaler
 import logging
 import os
-from gensim.models import FastText
-model = FastText.load('model.wv')
-
+from gensim.models import FastText, KeyedVectors
+model = FastText()
+model.wv = KeyedVectors.load("model.wordvectors", mmap='r')
 
 
 logger = logging.getLogger(__name__)

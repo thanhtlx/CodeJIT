@@ -14,6 +14,10 @@ from sklearn import preprocessing
 from sklearn.preprocessing import MinMaxScaler
 import logging
 import os
+from gensim.models import FastText
+model = FastText.load('model.wv')
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -45,12 +49,9 @@ def preprocess_code_line(code, remove_python_common_tokens=False):
 
 class InputFeatures(object):
     """A single set of features of data."""
-
-    def __init__(self, commit_id, input_ids, input_mask, input_tokens, label, manual_features):
+    def __init__(self, commit_id, embedd, label, manual_features):
         self.commit_id = commit_id
-        self.input_ids = input_ids
-        self.input_mask = input_mask
-        self.input_tokens = input_tokens
+        self.embedd = embedd
         self.label = label
         self.manual_features = manual_features
 
@@ -83,23 +84,24 @@ def convert_examples_to_features(item, cls_token='[CLS]', sep_token='[SEP]', seq
 
     input_tokens = msg_tokens + ['[ADD]'] + added_tokens + ['[DEL]'] + removed_tokens
 
-    input_tokens = input_tokens[:512 - 2]
+    input_tokens = input_tokens[:5000 - 2]
     input_tokens = [tokenizer.cls_token] + input_tokens + [tokenizer.sep_token]
-    input_ids = tokenizer.convert_tokens_to_ids(input_tokens)
-    input_mask = [1 if mask_padding_with_zero else 0] * len(input_ids)
+    embedd = model.wv.get_sentence_vector(input_tokens)
+    embedd = torch.tensor(embedd)
+    embedd = embedd.reshape(1,embedd.shape[0])
+    # input_ids = tokenizer.convert_tokens_to_ids(input_tokens)
+    # input_mask = [1 if mask_padding_with_zero else 0] * len(input_ids)
 
-    # Zero-pad up to the sequence length.
-    padding_length = 512 - len(input_ids)
+    # # Zero-pad up to the sequence length.
+    # padding_length = 512 - len(input_ids)
 
-    input_ids = input_ids + ([pad_token] * padding_length)
-    input_mask = input_mask + ([0 if mask_padding_with_zero else 1] * padding_length)
-    assert len(input_ids) == 512
-    assert len(input_mask) == 512
+    # input_ids = input_ids + ([pad_token] * padding_length)
+    # input_mask = input_mask + ([0 if mask_padding_with_zero else 1] * padding_length)
+    # assert len(input_ids) == 512
+    # assert len(input_mask) == 512
 
     return InputFeatures(commit_id=commit_id,
-                         input_ids=input_ids,
-                         input_mask=input_mask,
-                         input_tokens=input_tokens,
+                         embedd=embedd,
                          manual_features=manual_features,
                          label=label)
 
@@ -150,8 +152,7 @@ class TextDataset(Dataset):
         return len(self.examples)
 
     def __getitem__(self, item):
-        return (torch.tensor(self.examples[item].input_ids),
-                torch.tensor(self.examples[item].input_mask),
+        return (torch.tensor(self.examples[item].embedd),
                 torch.tensor(self.examples[item].manual_features),
                 torch.tensor(self.examples[item].label))
 

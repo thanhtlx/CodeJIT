@@ -81,9 +81,9 @@ def train(args, train_dataset, model, tokenizer):
         tr_loss = 0
         tr_num = 0
         for step, batch in enumerate(bar):
-            (inputs_ids, attn_masks, manual_features, labels) = [x.to(args.device) for x in batch]
+            (inputs_ids, manual_features, labels) = [x.to(args.device) for x in batch]
             model.train()
-            loss, logits, _ = model(inputs_ids, attn_masks, manual_features, labels)
+            loss, logits, _ = model(inputs_ids,  manual_features, labels)
             if args.n_gpu > 1:
                 loss = loss.mean()
 
@@ -185,9 +185,9 @@ def evaluate(args, model, tokenizer, eval_when_training=False):
     logits = []
     y_trues = []
     for batch in eval_dataloader:
-        (inputs_ids, attn_masks, manual_features, labels) = [x.to(args.device) for x in batch]
+        (inputs_ids,  manual_features, labels) = [x.to(args.device) for x in batch]
         with torch.no_grad():
-            loss, logit, _ = model(inputs_ids, attn_masks, manual_features, labels)
+            loss, logit, _ = model(inputs_ids,  manual_features, labels)
             torch.cuda.empty_cache()
             eval_loss += loss.mean().item()
             logits.append(logit.cpu().numpy())
@@ -250,9 +250,9 @@ def test(args, model, tokenizer, best_threshold=0.5):
     y_trues = []
     attns = []
     for batch in eval_dataloader:
-        (inputs_ids, attn_masks, manual_features, labels) = [x.to(args.device) for x in batch]
+        (inputs_ids,  manual_features, labels) = [x.to(args.device) for x in batch]
         with torch.no_grad():
-            loss, logit = model(inputs_ids, attn_masks, manual_features, labels, output_attentions=True)
+            loss, logit = model(inputs_ids,  manual_features, labels, output_attentions=True)
             eval_loss += loss.mean().item()
             logits.append(logit.cpu().numpy())
             y_trues.append(labels.cpu().numpy())
@@ -505,17 +505,18 @@ def main(args):
     config.num_labels = args.num_labels
     config.feature_size = args.feature_size
     config.hidden_dropout_prob = args.head_dropout_prob
+    config.hidden_size = 256
     tokenizer = RobertaTokenizer.from_pretrained(args.tokenizer_name)
     special_tokens_dict = {'additional_special_tokens': ["[ADD]", "[DEL]"]}
     
     tokenizer.add_special_tokens(special_tokens_dict)
 
-    model = RobertaModel.from_pretrained(args.model_name_or_path, config=config)
-    model.resize_token_embeddings(len(tokenizer))
+    # model = RobertaModel.from_pretrained(args.model_name_or_path, config=config)
+    # model.resize_token_embeddings(len(tokenizer))
     
     print("Training/evaluation parameters %s", args)
 
-    model = Model(model, config, tokenizer, args)
+    model = Model(config, tokenizer, args)
     # Training
     if args.do_train:
         if args.semantic_checkpoint:
@@ -560,7 +561,6 @@ def main(args):
         model.to(args.device)
         test(args, model, tokenizer, best_threshold=0.5)
         eval_result(os.path.join(args.output_dir, "predictions.csv"), args.test_data_file[-1])
-
     return results
 
 

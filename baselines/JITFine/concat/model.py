@@ -17,7 +17,7 @@ class RobertaClassificationHead(nn.Module):
         self.out_proj_new = nn.Linear(config.hidden_size + config.hidden_size, 1)
 
     def forward(self, features, manual_features=None, **kwargs):
-        x = features[:, 0, :]  # take <s> token (equiv. to [CLS])  [bs,hidden_size]
+        x = features#[:, 0, :]  # take <s> token (equiv. to [CLS])  [bs,hidden_size]
         y = manual_features.float()  # [bs, feature_size]
         y = self.manual_dense(y)
         y = torch.tanh(y)
@@ -29,23 +29,20 @@ class RobertaClassificationHead(nn.Module):
 
 
 class Model(nn.Module):
-    def __init__(self, encoder, config, tokenizer, args):
+    def __init__(self, config, tokenizer, args):
         super(Model, self).__init__()
-        self.encoder = encoder
         self.config = config
         self.tokenizer = tokenizer
         self.classifier = RobertaClassificationHead(config)
         self.args = args
 
-    def forward(self, inputs_ids, attn_masks, manual_features=None,
+    def forward(self, embedd, manual_features=None,
                 labels=None, output_attentions=None):
-        outputs = \
-            self.encoder(input_ids=inputs_ids, attention_mask=attn_masks, output_attentions=output_attentions)
+        # outputs = self.model.wv.get_sentence_vector(inputs_ids)
+        
+        last_layer_attn_weights = None
 
-        last_layer_attn_weights = outputs.attentions[self.config.num_hidden_layers - 1][:, :,
-                                  0].detach() if output_attentions else None
-
-        logits = self.classifier(outputs[0], manual_features)
+        logits = self.classifier(embedd, manual_features)
 
         prob = torch.sigmoid(logits)
         if labels is not None:

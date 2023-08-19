@@ -17,11 +17,19 @@ class GraphDataset(Dataset):
                     print("graph load exception:", graph_file)
             else:
                 graph_file = os.path.join(os.path.join(self.graph_dir, "VFC"), "data_" + f + ".pt")
-                try:
-                    torch.load(graph_file)
-                    files.append(graph_file)
-                except:
-                    print("graph load exception:", graph_file)
+                if os.path.isfile(graph_file):
+                    try:
+                        torch.load(graph_file)
+                        files.append(graph_file)
+                    except:
+                        print("graph load exception:", graph_file)
+                else:
+                    graph_file = os.path.join(os.path.join(self.graph_dir, "VUC"), "data_" + f + ".pt")
+                    try:
+                        torch.load(graph_file)
+                        files.append(graph_file)
+                    except:
+                        print("graph load exception:", graph_file)
 
         print("data size:", len(files))
         self.datapoint_files = files

@@ -19,7 +19,8 @@ class GATClassifier(torch.nn.Module):
             else:
                 exec('self.conv_{} = GAT(hidden_channels, hidden_channels, num_layers = self.num_layers, dropout = dropout)'.format(i))
         self.relu = ReLU(inplace=True)
-        self.lin = Linear(hidden_channels, 2)
+        # 3 label
+        self.lin = Linear(hidden_channels, 3)
         self.out = Softmax(dim=0)
 
     def forward(self, x, edge_index, edge_type, edge_attr):

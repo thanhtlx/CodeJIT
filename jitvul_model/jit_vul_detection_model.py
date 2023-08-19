@@ -150,30 +150,27 @@ def evaluate_metrics(model_name, model, _loader, device):
             if graph.num_nodes == 0 or graph.num_edges == 0:
                 print(commit_id)
                 continue
-            
-
             out = model(graph.x, graph.edge_index, graph.edge_type, graph.edge_attr)
             target = target.cpu().detach().numpy()
             pred = out.argmax(dim=1).cpu().detach().numpy()
             pro_out = out.tolist()[0]
             prob_1 = out.cpu().detach().numpy()[0][1]
-            write_to_file_results.append({"commit_id": commit_id, "predict": pred[0], "target": graph.y.item(),"label0":pro_out[0],"label1":pro_out[1]})
+            write_to_file_results.append({"commit_id": commit_id, "predict": pred[0], "target": graph.y.item(),"label0":pro_out[0],"label1":pro_out[1], "label1":pro_out[2]})
             all_probs.append(prob_1)
             all_predictions.append(pred)
             all_targets.append(target)
             del graph.x, graph.edge_index, graph.edge_type, graph.y, graph
-        fpr, tpr, _ = roc_curve(all_targets, all_probs)
-        auc_score = round(auc(fpr, tpr) * 100, 2)
+        # fpr, tpr, _ = roc_curve(all_targets, all_probs)
+        # auc_score = round(auc(fpr, tpr) * 100, 2)
         acc = round(accuracy_score(all_targets, all_predictions) * 100, 2)
         print(acc)
         precision = round(precision_score(all_targets, all_predictions) * 100, 2)
         f1 = round(f1_score(all_targets, all_predictions) * 100, 2)
         recall = round(recall_score(all_targets, all_predictions) * 100, 2)
         matrix = confusion_matrix(all_targets, all_predictions)
-        target_names = ['clean', 'buggy']
+        target_names = ['clean', 'buggy','unlabel']
         report = classification_report(all_targets, all_predictions, target_names=target_names)
-        result = "auc: {}".format(auc_score) + " acc: {}".format(acc) + " precision: {}".format(precision) + " recall: {}".format(recall) + " f1: {}".format(f1) + " \nreport:\n{}".format(report) + "\nmatrix:\n{}".format(matrix)
-
+        result = " acc: {}".format(acc) + " precision: {}".format(precision) + " recall: {}".format(recall) + " f1: {}".format(f1) + " \nreport:\n{}".format(report) + "\nmatrix:\n{}".format(matrix)
         print(result)
     df = pandas.DataFrame.from_dict(write_to_file_results)
     df.to_csv (r'Data/result/'+model_name+'.csv', index = True, header=True)

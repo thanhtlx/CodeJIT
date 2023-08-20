@@ -53,12 +53,19 @@ def train_model(graph_path, train_file_path,test_file_path, _params, model_path,
     valid_auc = 0
     last_train_loss = -1
     last_acc = 0
+    early_stop = 0
     for e in range(starting_epochs, max_epochs):
         train_loss, acc = train(e, _trainLoader, model, criterion, optimizer, device)
         if last_train_loss == -1 or last_train_loss > train_loss:
             saved_model_path =  os.path.join(os.path.join(os.getcwd(), model_path), _params['model_name'] + ".pt")
             torch.save(model.state_dict(), saved_model_path)
             last_train_loss = train_loss
+            print('save model')
+        else:
+            early_stop += 1
+            print('early_stop: ', early_stop)
+            if early_stop > 5:
+                break
         gc.collect()
 
 
@@ -73,11 +80,6 @@ def train(curr_epochs, _trainLoader, model, criterion, optimizer, device):
             print("curr: {}".format(index) + " train loss: {}".format(train_loss / (index + 1)) + " acc:{}".format(correct / (index + 1)))
         if device != 'cpu':
             graph = graph.cuda()
-        # if graph.y.item() == 1:
-        #     target = torch.tensor([[0,1]],dtype=float)
-        # else:
-        #     target = torch.tensor([[1,0]],dtype=float)
-        # #if graph.y 
         target = graph.y
         target = target.to(device)
         
@@ -90,8 +92,6 @@ def train(curr_epochs, _trainLoader, model, criterion, optimizer, device):
         optimizer.step()
         train_loss += loss.item()
         _, predicted = out.max(1)
-        # print('pred',predicted)
-        # print('-'*3)
         correct += predicted.eq(target).sum().item()
         del graph.x, graph.edge_index, graph.edge_type, graph.y, graph, predicted, out
     avg_train_loss = train_loss / len(_trainLoader)

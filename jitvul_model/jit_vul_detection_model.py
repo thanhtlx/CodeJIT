@@ -61,11 +61,11 @@ def train_model(graph_path, train_file_path,test_file_path, _params, model_path,
             torch.save(model.state_dict(), saved_model_path)
             last_train_loss = train_loss
             print('save model')
-        else:
-            early_stop += 1
-            print('early_stop: ', early_stop)
-            if early_stop > 5:
-                break
+        # else:
+        #     early_stop += 1
+        #     print('early_stop: ', early_stop)
+        #     if early_stop > 5:
+        #         break
         gc.collect()
 
 

@@ -13,8 +13,8 @@ class GraphDataset(Dataset):
                 try:
                     torch.load(graph_file)
                     files.append(graph_file)
-                except:
-                    print("graph load exception:", graph_file)
+                except Exception as e:
+                    print("graph load exception:", graph_file,e)
             else:
                 graph_file = os.path.join(os.path.join(self.graph_dir, "VFC"), "data_" + f + ".pt")
                 try:

@@ -12,6 +12,8 @@ from jitvul_model.FastRGCN import *
 from jitvul_model.GATClassifier import *
 from jitvul_model.GCN import *
 from jitvul_model.GIN import *
+# GraphSAGE
+from jitvul_model.GraphSAGE import *
 import pandas
 tqdm.pandas()
 
@@ -29,6 +31,8 @@ def get_model(data,_params, model_type):
         model = GATClassifier(in_channels = data.num_node_features, hidden_channels=_params['hidden_size'], dropout = _params['dropout_rate'], num_of_layers = _params["num_of_layers"], edge_dim = data.edge_attr.size(-1), graph_readout_func = _params["graph_readout_func"])
     elif model_type == "GIN":
         model = CodeJITGIN(in_channels = data.num_node_features, hidden_channels=_params['hidden_size'], dropout = _params['dropout_rate'], num_of_layers = _params["num_of_layers"], graph_readout_func = _params["graph_readout_func"])
+    elif model_type == "GraphSAGE":
+        model = CodejitGraphSAGE(in_channels = data.num_node_features, hidden_channels=_params['hidden_size'], dropout = _params['dropout_rate'], num_of_layers = _params["num_of_layers"], graph_readout_func = _params["graph_readout_func"])
     else:
         # print("ERROR:: GNN type " + _params['GNN_type'] + " is not supported.")
         return None
